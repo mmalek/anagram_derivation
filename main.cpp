@@ -38,6 +38,8 @@ bool Node::insert(const std::string& word, const Histogram& histogram)
             }
         }
     } else {
+        // Check if character histogram differs only by one, that is, only one character
+        // is different from the current word. If so, we have anagram derivation of a current word.
         if (histogram.diffByOne(m_histogram)) {
             m_children.emplace_back(new Node{this, word, histogram, {}});
             return true;
@@ -74,19 +76,20 @@ std::vector<WordHist> createDerivations(QString fileName, std::string inputWord)
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         while (!file.atEnd()) {
             const QString word = QString::fromUtf8(file.readLine()).trimmed().toLower();
-            if (word.size() >= 3 && isValidWord(word)) {
+            if (isValidWord(word)) {
                 std::string curWord = word.toStdString();
+
+                // Load only words that are potential derivations of an input word
+                // This is done by checking if character histogram of an input word
+                // fully contains in histogram of a dictionary entry.
+                // We also inore entries shorter or equal to input word size
                 Histogram curHistogram(curWord);
-                Histogram diff = histogram - curHistogram;
-                if (diff.isClear() && curWord.size() > inputWord.size()) {
+                if (curHistogram.contains(histogram) && curWord.size() > inputWord.size()) {
                     derivations.emplace_back(std::move(curWord), std::move(curHistogram));
                 }
             }
         }
     }
-
-    std::sort(derivations.begin(), derivations.end(),
-              [](const WordHist& l, const WordHist& r) { return l.first.size() < r.first.size(); });
 
     return derivations;
 }
@@ -119,11 +122,21 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+
+    // We assume only latin characters are used
     const std::string startWord = wordArg.toStdString();
 
+    // Load dictionary file. Store only these words that are potential anagram derivations
+    // of an input word
     std::vector<WordHist> derivations = createDerivations(parser.value(dictionaryOption), startWord);
-    Histogram histogram(startWord);
 
+    // Sort loaded entries by size before putting it into the tree
+    // This is needed to first put shorter words to the tree.
+    std::sort(derivations.begin(), derivations.end(),
+              [](const WordHist& l, const WordHist& r) { return l.first.size() < r.first.size(); });
+
+    // Now we create a derivation tree
+    Histogram histogram(startWord);
     Node root{nullptr, startWord, histogram, {}};
     for (std::size_t i = 0; i < derivations.size(); ++i) {
         std::cout << "Building dervations tree: " << i*100/derivations.size() << "%\r";
@@ -131,9 +144,11 @@ int main(int argc, char *argv[])
         root.insert(std::move(wh.first), std::move(wh.second));
     }
 
+    // We retrieve the longest derivatons just by traversing the tree to the longest branches
     std::vector<const Node*> longest;
     root.longestDerivation(longest);
 
+    // Print results
     for (const Node* derivation : longest) {
         std::deque<std::string> path;
         for (; derivation != nullptr; derivation = derivation->parent) {

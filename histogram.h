@@ -3,9 +3,9 @@
 
 #include <array>
 #include <string>
-#include <algorithm>
-#include <numeric>
 
+// Represents character histogram of a word
+// i.e. stores how many times each alphabet letter repeats in a word
 class Histogram
 {
 public:
@@ -13,14 +13,13 @@ public:
 
     explicit Histogram(const std::string& word);
 
-    void operator+=(char c);
+    // Checks if the other histogram fully contains in a current histogram.
+    // If so, the other word is a potential distant anagram derivation of a current word.
+    bool contains(const Histogram& other) const;
 
-    void operator-=(const Histogram& other);
-
-    Histogram operator-(const Histogram& other) const;
-
-    bool isClear() const { return std::none_of(m_hits.begin(), m_hits.end(), [](int i) { return i > 0; }); }
-
+    // Check if character histogram differs only by one, that is, only one character
+    // is different from the other word.
+    // If so, the other word is an anagram derivation of a current word.
     bool diffByOne(const Histogram& other) const;
 
 private:

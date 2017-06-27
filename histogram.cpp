@@ -6,30 +6,20 @@ Histogram::Histogram(const std::string &word)
     std::fill(m_hits.begin(), m_hits.end(), 0);
 
     for (char c : word) {
-        *this += c;
+        const int i = index(c);
+        if (i >= 0) {
+            ++m_hits[i];
+        }
     }
 }
 
-void Histogram::operator+=(char c)
-{
-    const int i = index(c);
-    if (i >= 0) {
-        ++m_hits[i];
-    }
-}
-
-void Histogram::operator-=(const Histogram& other)
+bool Histogram::contains(const Histogram& other) const
 {
     for (int i = 0; i < SIZE; ++i) {
-        m_hits[i] -= other.m_hits[i];
+        if (m_hits[i] - other.m_hits[i] < 0)
+            return false;
     }
-}
-
-Histogram Histogram::operator-(const Histogram& other) const
-{
-    Histogram histogram = *this;
-    histogram -= other;
-    return histogram;
+    return true;
 }
 
 bool Histogram::diffByOne(const Histogram& other) const
