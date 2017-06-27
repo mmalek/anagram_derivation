@@ -7,8 +7,6 @@ find_package(Qt5 REQUIRED COMPONENTS Core)
 add_executable(${PROJECT_NAME}
     "resources.qrc"
     "main.cpp"
-    "dictionary.cpp"
-    "dictionary.h"
     "histogram.cpp"
     "histogram.h"
 )

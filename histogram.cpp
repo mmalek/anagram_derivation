@@ -6,41 +6,43 @@ Histogram::Histogram(const std::string &word)
     std::fill(m_hits.begin(), m_hits.end(), 0);
 
     for (char c : word) {
-        add(c);
+        *this += c;
     }
 }
 
-bool Histogram::contains(char c) const
-{
-    return occurrences(c) > 0;
-}
-
-int Histogram::occurrences(char c) const
-{
-    const int i = index(c);
-    if (i >= 0)
-        return m_hits[i];
-    else
-        return 0;
-}
-
-void Histogram::add(char c)
+void Histogram::operator+=(char c)
 {
     const int i = index(c);
     if (i >= 0) {
         ++m_hits[i];
-        m_dirtyMask.set(i, m_hits[i] > 0);
     }
 }
 
-bool Histogram::remove(char c)
+void Histogram::operator-=(const Histogram& other)
 {
-    const int i = index(c);
-    if (i >= 0 && m_hits[i] > 0) {
-        --m_hits[i];
-        m_dirtyMask.set(i, m_hits[i] > 0);
-        return true;
-    } else {
-        return false;
+    for (int i = 0; i < SIZE; ++i) {
+        m_hits[i] -= other.m_hits[i];
     }
+}
+
+Histogram Histogram::operator-(const Histogram& other) const
+{
+    Histogram histogram = *this;
+    histogram -= other;
+    return histogram;
+}
+
+bool Histogram::diffByOne(const Histogram& other) const
+{
+    bool isDiffByOne = false;
+    for (int i = 0; i < SIZE; ++i) {
+        const int diff = m_hits[i] - other.m_hits[i];
+        if (diff == 1 && !isDiffByOne)
+            isDiffByOne = true;
+        else if (diff == 1 && isDiffByOne)
+            return false;
+        else if (diff != 0)
+            return false;
+    }
+    return isDiffByOne;
 }

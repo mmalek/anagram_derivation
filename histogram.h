@@ -2,8 +2,9 @@
 #define HISTOGRAM_H
 
 #include <array>
-#include <bitset>
 #include <string>
+#include <algorithm>
+#include <numeric>
 
 class Histogram
 {
@@ -12,15 +13,15 @@ public:
 
     explicit Histogram(const std::string& word);
 
-    bool contains(char c) const;
+    void operator+=(char c);
 
-    int occurrences(char c) const;
+    void operator-=(const Histogram& other);
 
-    void add(char c);
+    Histogram operator-(const Histogram& other) const;
 
-    bool remove(char c);
+    bool isClear() const { return std::none_of(m_hits.begin(), m_hits.end(), [](int i) { return i > 0; }); }
 
-    bool isClear() const { return m_dirtyMask.none(); }
+    bool diffByOne(const Histogram& other) const;
 
 private:
     static constexpr int index(char c)
@@ -31,7 +32,6 @@ private:
 
 private:
     std::array<int, SIZE> m_hits;
-    std::bitset<SIZE> m_dirtyMask;
 };
 
 #endif // HISTOGRAM_H
